@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>결제에서 카드로 · 시연 영상</title>
+<style>
+:root{--bg:#EEF0F2;--ink:#0B0B0C;--mid:#646869;--yellow:#FCE600}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:radial-gradient(1200px 600px at 30% 0%,#F8F9FA 0%,var(--bg) 60%);font-family:Pretendard,"Pretendard Variable",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:var(--ink)}
+body{display:flex;align-items:flex-start;justify-content:center;gap:56px;padding:32px 24px;flex-wrap:wrap}
+.wrap{position:relative;width:min(100%,480px);border-radius:24px;overflow:hidden;background:#111;box-shadow:0 30px 70px rgba(16,20,24,.22)}
+video{display:block;width:100%;height:auto}
+.panel{width:375px;background:#fff;border-radius:24px;padding:28px 24px 24px;box-shadow:0 14px 40px rgba(16,20,24,.08);font-size:14px;line-height:20px}
+.kicker{display:none}
+h1{font-size:20px;line-height:28px;margin:0 0 4px;letter-spacing:-.3px}
+.sub{color:var(--mid);font-size:13px;margin-bottom:20px}
+.meta{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.meta span{font-size:11px;color:var(--mid);background:var(--bg);border-radius:8px;padding:4px 8px}
+ol{padding-left:0;list-style:none;margin:0 0 20px}
+li{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid rgba(135,146,156,.2);color:#0B0B0C;font-size:14px}
+li::before{content:attr(data-n);flex:0 0 22px;height:22px;border-radius:50%;background:#111;color:#fff;font-size:12px;font-weight:600;text-align:center;line-height:22px}
+a.btn{display:block;text-align:center;background:var(--yellow);color:#111;text-decoration:none;font-weight:700;border-radius:999px;padding:16px;font-size:16px;margin-bottom:8px}
+a.ghost{display:block;text-align:center;background:#F3F4F5;color:#111;text-decoration:none;border-radius:999px;padding:13px;font-size:14px;font-weight:600}
+.note{color:#9aa0a3;font-size:11px;line-height:16px;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap"><video src="video/kp_demo_v2.mp4" controls autoplay muted playsinline loop poster=""></video></div>
+<div class="panel">
+  <div class="kicker">카카오페이 사전과제 · 시연 영상</div>
+  <h1>결제에서 카드로</h1>
+  <div class="sub">최근 결제 하나로 카드 조건을 바로 확인하는 흐름을 43초로 보여줘요.</div>
+  <ol>
+    <li data-n="1">홈에서 최근 결제 행을 눌러요</li>
+    <li data-n="2">배달의민족 15,000원이 선택돼 있어요</li>
+    <li data-n="3">혜택 있는 카드 중 KaPick으로 비교해요</li>
+    <li data-n="4">결론부터 보고 아래에서 근거를 확인해요</li>
+    <li data-n="5">카드 혜택 전체를 보고 상세로 들어가요</li>
+    <li data-n="6">신청은 신한카드에서 이어가요</li>
+    <li data-n="7">결제를 G마켓으로 바꾸면 조건에 안 맞아요</li>
+    <li data-n="8">안 되는 이유와 다른 카드를 함께 안내해요</li>
+    <li data-n="9">조건 바에서 카드와 결제를 바로 바꿀 수 있어요</li>
+  </ol>
+  <a class="btn" href="index.html">직접 조작 프로토타입 열기</a>
+  <a class="ghost" href="video/kp_demo_v2.mp4" download>MP4 내려받기</a>
+</div>
+</body>
+</html>

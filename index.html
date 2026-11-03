@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>KaPick 결제→카드 비교 · 프로토타입 v2</title>
+<meta name="description" content="카카오페이 사전과제 · 결제에서 카드로 · 직접 조작 프로토타입 (이미지 기반 · 가정값)">
+<style>
+:root{--bg:#EEF0F2;--ink:#0B0B0C;--mid:#646869;--line:#E5E7E9;--yellow:#FCE600;--blue:#2B82FC;--panel:#fff;--ease:cubic-bezier(.2,.8,.2,1)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;background:var(--bg);font-family:Pretendard,"Pretendard Variable",-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:var(--ink)}
+body{display:flex;align-items:flex-start;justify-content:center;gap:56px;padding:32px 24px;min-height:100%;background:radial-gradient(1200px 600px at 30% 0%,#F8F9FA 0%,var(--bg) 60%)}
+#stage{position:relative;flex:0 0 auto;position:sticky;top:32px}
+#device{position:relative;width:375px;height:812px;background:#fff;border-radius:44px;overflow:hidden;box-shadow:0 30px 70px rgba(16,20,24,.22),0 0 0 11px #0f0f10,0 0 0 13px #3a3a3c,inset 0 0 0 1px rgba(0,0,0,.06);transform-origin:top left}
+/* pages */
+.page{position:absolute;inset:0;background:#fff;display:none;will-change:transform}
+.page.on{display:block}
+.page.push-in{animation:pushIn .32s var(--ease)}
+.page.push-out{animation:pushOut .28s var(--ease) forwards}
+.page.under-in{animation:underIn .32s var(--ease)}
+.page.under-out{animation:underOut .28s var(--ease) forwards}
+.page.fade-in{animation:fadeIn .2s ease}
+@keyframes pushIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+@keyframes pushOut{from{transform:translateX(0)}to{transform:translateX(100%)}}
+@keyframes underIn{from{transform:translateX(-24%)}to{transform:translateX(0)}}
+@keyframes underOut{from{transform:translateX(0)}to{transform:translateX(-24%)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.scroll{position:absolute;left:0;right:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.content{position:relative;width:375px}
+.content img{display:block;width:375px;height:auto}
+.fixed{position:absolute;left:0;width:375px;pointer-events:none}
+.fixed img{display:block;width:375px;height:auto}
+.fixed.cta{background:linear-gradient(to bottom,rgba(255,255,255,0) 0%,#fff 32%)}
+.hs{position:absolute;cursor:pointer;border-radius:12px;pointer-events:auto}
+.hs.show{outline:2px dashed rgba(43,130,252,.6);outline-offset:-2px;background:rgba(43,130,252,.06)}
+/* sheets */
+#dim{position:absolute;inset:0;background:#0C0C0C;opacity:0;pointer-events:none;transition:opacity .28s ease;z-index:30}
+#dim.on{opacity:.673;pointer-events:auto}
+.sheet{position:absolute;left:0;bottom:0;width:375px;z-index:40;display:none;transform:translateY(100%);transition:transform .34s var(--ease)}
+.sheet.on{display:block}
+.sheet.in{transform:translateY(0)}
+.sheet img{display:block;width:375px;height:auto}
+/* coach */
+.ring{position:absolute;border:3px solid var(--blue);border-radius:14px;pointer-events:none;box-shadow:0 0 0 0 rgba(43,130,252,.45);animation:pulse 1.4s ease-out infinite;z-index:45}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(43,130,252,.45)}100%{box-shadow:0 0 0 14px rgba(43,130,252,0)}}
+#coach{position:absolute;left:16px;right:16px;bottom:128px;background:#111;color:#fff;border-radius:14px;padding:12px 14px;font-size:13px;line-height:19px;z-index:50;display:none;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+#coach b{display:block;font-size:11px;color:var(--yellow);margin-bottom:3px}
+#coach .x{position:absolute;right:10px;top:8px;color:#aaa;font-size:16px;cursor:pointer}
+#toast{position:absolute;left:50%;bottom:140px;transform:translateX(-50%);background:rgba(17,17,17,.92);color:#fff;font-size:13px;padding:10px 14px;border-radius:999px;display:none;z-index:60;white-space:nowrap}
+.tap{position:absolute;width:44px;height:44px;border-radius:50%;background:rgba(252,230,0,.55);transform:translate(-50%,-50%) scale(.3);pointer-events:none;z-index:70;animation:tap .45s ease-out forwards}
+@keyframes tap{to{transform:translate(-50%,-50%) scale(1.3);opacity:0}}
+#end{position:absolute;inset:0;background:#fff;display:none;z-index:80;padding:120px 28px 0;text-align:center;animation:fadeIn .25s ease}
+#end h2{font-size:20px;margin:0 0 8px}
+#end p{color:var(--mid);font-size:13px;line-height:19px;margin:0 0 24px}
+#end button{display:block;width:100%;border:0;border-radius:999px;padding:16px;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:10px}
+#end .y{background:var(--yellow)}#end .g{background:#F3F4F5}
+/* panel · KP DS 문법 */
+#panel{width:375px;background:#fff;border-radius:24px;padding:28px 24px 24px;box-shadow:0 14px 40px rgba(16,20,24,.08);font-size:14px;line-height:20px;color:#0B0B0C}
+#panel h1{font-size:20px;line-height:28px;margin:0 0 4px;font-weight:700;letter-spacing:-.3px}
+#panel .sub{font-size:13px;line-height:20px;color:#646869;margin-bottom:20px}
+.modes{display:flex;gap:8px;margin-bottom:20px}
+.modes button{flex:1;border:0;background:#F3F4F5;color:#646869;border-radius:999px;padding:10px 0;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.modes button.on{background:#111;color:#fff}
+#panel .label{font-size:13px;font-weight:600;color:#646869;margin:0 0 4px}
+ol.steps{list-style:none;padding:0;margin:0 0 20px}
+ol.steps li{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-bottom:1px solid rgba(135,146,156,.2);color:#646869;font-size:14px;line-height:20px}
+ol.steps li::before{content:attr(data-n);flex:0 0 22px;height:22px;border-radius:50%;background:#F3F4F5;font-size:12px;font-weight:600;text-align:center;line-height:22px;color:#646869;margin-top:-1px}
+ol.steps li.cur{color:#0B0B0C;font-weight:600}
+ol.steps li.cur::before{background:#111;color:#fff}
+ol.steps li.done{color:#9aa0a3}
+ol.steps li.done::before{content:"✓";background:#E8F3FF;color:#2B82FC}
+.assume{background:#F3F4F5;border-radius:16px;padding:16px;margin-bottom:20px}
+.assume b{display:block;font-size:13px;font-weight:400;color:#646869;margin-bottom:8px}
+.assume .kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;font-size:14px}
+.assume .kv span{color:#646869}.assume .kv strong{font-weight:600;color:#0B0B0C;text-align:right}
+.row{display:flex;flex-direction:column;gap:8px}
+.row button{border:0;border-radius:999px;padding:16px 0;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;background:#F3F4F5;color:#0B0B0C}
+.row button.primary{background:#FCE600}
+.row .duo{display:flex;gap:8px}.row .duo button{flex:1;font-size:14px;font-weight:600;padding:13px 0}
+/* demo (video) */
+body.demo{background:#F4F5F6;padding:0;gap:0;align-items:flex-start;justify-content:center;width:720px;height:1100px;overflow:hidden;position:relative;zoom:1.5}
+body.demo #panel,body.demo #coach,body.demo #toast{display:none!important}
+body.demo #stage{margin:70px auto 0;width:375px}
+#cursor{position:absolute;width:26px;height:26px;border-radius:50%;background:rgba(17,17,17,.38);border:2px solid rgba(255,255,255,.95);transform:translate(-50%,-50%);z-index:90;pointer-events:none;transition:transform .12s;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+#cursor.down{transform:translate(-50%,-50%) scale(.72)}
+#cap{position:absolute;left:50%;top:862px;transform:translateX(-50%);width:600px;text-align:center;font-size:19px;line-height:28px;color:#111;opacity:0;transition:opacity .25s;letter-spacing:-.2px}
+#cap.on{opacity:1}
+#cap b{display:inline-block;width:26px;height:26px;line-height:26px;text-align:center;background:#111;color:#fff;border-radius:50%;font-size:13px;margin-right:10px;vertical-align:1px;font-weight:700}
+#title{position:absolute;inset:0;background:#F4F5F6;z-index:200;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;opacity:0;pointer-events:none;transition:opacity .35s ease}
+#title.on{opacity:1}
+#title h1{font-size:30px;margin:0 0 10px;font-weight:700;letter-spacing:-.3px}
+#title p{font-size:15px;color:#646869;margin:0;line-height:22px}
+@media (max-width:820px){body{flex-direction:column;gap:14px;padding:12px}#panel{width:min(100%,375px);padding:20px 16px}ol.steps{display:none}#panel .label{display:none}}
+</style>
+</head>
+<body>
+<div id="stage"><div id="device">
+
+<!-- PAGES -->
+<section class="page" id="home">
+  <div class="scroll" style="top:0;bottom:0"><div class="content">
+    <img src="img/home_content.png" alt="홈">
+    <div class="hs" data-sheet="s21" data-id="entry" style="left:28px;top:516px;width:319px;height:62px"></div>
+  </div></div>
+  <div class="fixed" style="top:0"><img src="img/home_header.png" alt=""></div>
+  <div class="fixed" style="bottom:0"><img src="img/home_tab.png" alt=""></div>
+</section>
+
+<section class="page" id="w3">
+  <div class="scroll" style="top:144px;bottom:0"><div class="content">
+    <img src="img/w3_content.png" alt="비교 결과">
+    <div class="hs" data-id="payrow" data-toast="결제 상세는 시연 범위 밖이에요" style="left:24px;top:112px;width:327px;height:70px"></div>
+    <div class="hs" data-id="insight" data-sheet="s31" style="left:24px;top:188px;width:327px;height:42px"></div>
+    <div class="hs" data-id="detail" data-go="a7" style="left:24px;top:809px;width:327px;height:24px"></div>
+    <div class="hs" data-id="notice" data-swap="w5" style="left:24px;top:1412px;width:327px;height:68px"></div>
+  </div></div>
+  <div class="fixed" style="top:0"><img src="img/w4_appbar.png" alt=""><div class="hs" data-back="1" data-id="back" style="left:8px;top:44px;width:48px;height:44px"></div></div>
+  <div class="fixed" style="top:88px"><img src="img/w4_bar.png" alt=""><div class="hs" data-id="bar_card" data-sheet="s31" style="left:24px;top:10px;width:151px;height:36px"></div><div class="hs" data-id="bar_pay" data-sheet="s21" style="left:200px;top:10px;width:151px;height:36px"></div></div>
+  <div class="fixed cta" style="bottom:0;height:114px"><img src="img/w4_cta_apply_btn.png" alt="" style="position:absolute;left:16px;top:20px;width:343px"><div class="hs" data-id="cta" data-sheet="s6" style="left:16px;top:20px;width:343px;height:60px"></div></div>
+</section>
+
+<section class="page" id="w5">
+  <div class="scroll" style="top:144px;bottom:0"><div class="content">
+    <img src="img/w5_content.png" alt="유의사항 펼침">
+    <div class="hs" data-id="insight" data-sheet="s31" style="left:24px;top:188px;width:327px;height:42px"></div>
+    <div class="hs" data-id="detail" data-go="a7" style="left:24px;top:809px;width:327px;height:24px"></div>
+    <div class="hs" data-id="notice" data-swap="w3" style="left:24px;top:1412px;width:327px;height:68px"></div>
+  </div></div>
+  <div class="fixed" style="top:0"><img src="img/w4_appbar.png" alt=""><div class="hs" data-back="1" data-id="back" style="left:8px;top:44px;width:48px;height:44px"></div></div>
+  <div class="fixed" style="top:88px"><img src="img/w4_bar.png" alt=""><div class="hs" data-id="bar_card" data-sheet="s31" style="left:24px;top:10px;width:151px;height:36px"></div><div class="hs" data-id="bar_pay" data-sheet="s21" style="left:200px;top:10px;width:151px;height:36px"></div></div>
+  <div class="fixed cta" style="bottom:0;height:114px"><img src="img/w4_cta_apply_btn.png" alt="" style="position:absolute;left:16px;top:20px;width:343px"><div class="hs" data-id="cta" data-sheet="s6" style="left:16px;top:20px;width:343px;height:60px"></div></div>
+</section>
+
+<section class="page" id="w4">
+  <div class="scroll" style="top:144px;bottom:0"><div class="content">
+    <img src="img/w4_content.png" alt="비교 결과 · 불일치">
+    <div class="hs" data-id="insight" data-sheet="s41" style="left:24px;top:188px;width:327px;height:42px"></div>
+    <div class="hs" data-id="detail" data-go="a7" style="left:24px;top:809px;width:327px;height:24px"></div>
+    <div class="hs" data-id="notice" data-toast="유의사항 펼침은 일치 화면에서 볼 수 있어요" style="left:24px;top:1412px;width:327px;height:68px"></div>
+  </div></div>
+  <div class="fixed" style="top:0"><img src="img/w4_appbar.png" alt=""><div class="hs" data-back="1" data-id="back" style="left:8px;top:44px;width:48px;height:44px"></div></div>
+  <div class="fixed" style="top:88px"><img src="img/w4_bar_g.png" alt=""><div class="hs" data-id="bar_card" data-sheet="s41" style="left:24px;top:10px;width:151px;height:36px"></div><div class="hs" data-id="bar_pay" data-sheet="s21" style="left:200px;top:10px;width:151px;height:36px"></div></div>
+  <div class="fixed cta" style="bottom:0;height:114px"><img src="img/w4_cta_other_btn.png" alt="" style="position:absolute;left:16px;top:20px;width:343px"><div class="hs" data-id="cta" data-sheet="s41" style="left:16px;top:20px;width:343px;height:60px"></div></div>
+</section>
+
+<section class="page" id="a7">
+  <div class="scroll" style="top:88px;bottom:0"><div class="content">
+    <img src="img/a7_content.png" alt="카드 상세">
+    <div class="hs" data-id="notice" data-toast="유의사항 전문은 비교 결과 화면의 펼침에서 볼 수 있어요" style="left:24px;top:1431px;width:327px;height:68px"></div>
+  </div></div>
+  <div class="fixed" style="top:0"><img src="img/a7_appbar.png" alt=""><div class="hs" data-back="1" data-id="back" style="left:8px;top:44px;width:48px;height:44px"></div></div>
+  <div class="fixed cta" style="bottom:0;height:114px"><img src="img/a7_cta_btn.png" alt="" style="position:absolute;left:16px;top:20px;width:343px"><div class="hs" data-id="cta" data-sheet="s6" style="left:16px;top:20px;width:343px;height:60px"></div></div>
+</section>
+
+<!-- SHEETS (overlay on current page) -->
+<div id="dim"></div>
+<div class="sheet" id="s21"><img src="img/s21_sheet.png" alt="결제 고르기">
+  <div class="hs" data-close="1" data-id="close" style="left:319px;top:8px;width:48px;height:48px"></div>
+  <div class="hs" data-id="row_g" data-pay="g" style="left:12px;top:156px;width:351px;height:60px"></div>
+  <div class="hs" data-id="row_b" data-pay="b" style="left:12px;top:216px;width:351px;height:60px"></div>
+  <div class="hs" data-id="row_gs" data-pay="gs" style="left:12px;top:276px;width:351px;height:60px"></div>
+  <div class="hs" data-id="row_sb" data-toast="시연은 배달의민족 · G마켓 · GS25로 준비했어요" style="left:12px;top:336px;width:351px;height:60px"></div>
+  <div class="hs" data-id="row_kc" data-toast="시연은 배달의민족 · G마켓 · GS25로 준비했어요" style="left:12px;top:396px;width:351px;height:60px"></div>
+  <div class="hs" data-id="btn" data-sheet="s22" style="left:16px;top:534px;width:343px;height:60px"></div>
+</div>
+<div class="sheet" id="s22"><img src="img/s22_sheet.png" alt="카드 고르기">
+  <div class="hs" data-close="1" data-id="close" style="left:319px;top:8px;width:48px;height:48px"></div>
+  <div class="hs" data-id="row_kp" data-toast="KaPick이 선택돼 있어요" style="left:12px;top:148px;width:351px;height:64px"></div>
+  <div class="hs" data-id="row_id" data-toast="시연은 KaPick 기준이에요 · 다른 카드는 G마켓 분기에서" style="left:12px;top:212px;width:351px;height:64px"></div>
+  <div class="hs" data-id="row_lk" data-toast="시연은 KaPick 기준이에요" style="left:12px;top:276px;width:351px;height:64px"></div>
+  <div class="hs" data-id="prev" data-sheet="s21" style="left:16px;top:454px;width:104px;height:60px"></div>
+  <div class="hs" data-id="btn" data-go="w3" style="left:128px;top:454px;width:231px;height:60px"></div>
+</div>
+<div class="sheet" id="s22e"><img src="img/s22e_sheet.png" alt="혜택 없음">
+  <div class="hs" data-close="1" data-id="close" style="left:319px;top:8px;width:48px;height:48px"></div>
+  <div class="hs" data-id="btn" data-sheet="s21" style="left:16px;top:316px;width:343px;height:60px"></div>
+</div>
+<div class="sheet" id="s31"><img src="img/s31_sheet.png" alt="카드 바꾸기">
+  <div class="hs" data-close="1" data-id="close" style="left:319px;top:8px;width:48px;height:48px"></div>
+  <div class="hs" data-id="row_kp" data-toast="KaPick이 선택돼 있어요" style="left:12px;top:148px;width:351px;height:64px"></div>
+  <div class="hs" data-id="row_id" data-toast="다른 카드 결과는 같은 결과 화면 템플릿으로 보여줘요" style="left:12px;top:212px;width:351px;height:64px"></div>
+  <div class="hs" data-id="row_lk" data-toast="다른 카드 결과는 같은 결과 화면 템플릿으로 보여줘요" style="left:12px;top:276px;width:351px;height:64px"></div>
+  <div class="hs" data-id="btn" data-close="1" style="left:16px;top:454px;width:343px;height:60px"></div>
+</div>
+<div class="sheet" id="s41"><img src="img/s41_sheet.png" alt="G마켓 카드 고르기">
+  <div class="hs" data-close="1" data-id="close" style="left:319px;top:8px;width:48px;height:48px"></div>
+  <div class="hs" data-id="btn" data-end="branch" style="left:16px;top:454px;width:343px;height:60px"></div>
+</div>
+<div class="sheet" id="s6"><img src="img/s6_sheet.png" alt="카드사 이동">
+  <div class="hs" data-close="1" data-id="close" style="left:319px;top:8px;width:48px;height:48px"></div>
+  <div class="hs" data-id="cancel" data-close="1" style="left:16px;top:145px;width:112px;height:60px"></div>
+  <div class="hs" data-id="go" data-end="main" style="left:136px;top:145px;width:223px;height:60px"></div>
+</div>
+
+<div id="coach"><span class="x" title="가이드 닫기">×</span><b id="coachN"></b><span id="coachT"></span></div>
+<div id="toast"></div>
+<div id="end">
+  <h2 id="endH">신한카드로 이동해요</h2>
+  <p id="endP">여기부터는 카드사 화면이에요.<br>카카오페이에서는 발급이 확정되지 않아요.</p>
+  <button class="y" id="endBranch">다른 결제(G마켓)로 해보기</button>
+  <button class="g" id="endHome">처음으로</button>
+</div>
+</div></div>
+
+<div id="panel">
+  <h1>결제에서 카드로</h1>
+  <div class="sub">최근 결제 하나를 골라 카드 조건에 맞는지 바로 확인해요.<br>왼쪽 화면을 직접 눌러 보세요.</div>
+  <div class="modes"><button id="mGuide" class="on">가이드 따라가기</button><button id="mFree">자유롭게 보기</button></div>
+  <div class="label">가이드 6단계</div>
+  <ol class="steps" id="steps"></ol>
+  <div class="assume"><b>가정값</b>
+    <div class="kv"><span>결제</span><strong>배달의민족 15,000원 · 10.27(화)</strong></div>
+    <div class="kv"><span>카드</span><strong>신한카드 KaPick</strong></div>
+    <div class="kv"><span>전월 실적</span><strong>40만원 이상</strong></div>
+    <div class="kv"><span>분기</span><strong>G마켓 32,000원 · 10.28(수)</strong></div>
+  </div>
+  <div class="row"><button class="primary" onclick="location.href='video.html'">시연 영상 보기</button><div class="duo"><button id="bReset">처음으로</button><button id="bHint">탭 가능한 곳 보기</button></div></div>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const device=$('#device'), coach=$('#coach'), toast=$('#toast'), dim=$('#dim');
+let stack=['home'], sheet=null, guide=true, step=0, hint=false, timer=null, busy=false;
+const cur=()=>stack[stack.length-1];
+const STEPS=[
+ {s:'home',t:'entry',n:'1 / 6',txt:'홈에서 "최근 결제로 카드 혜택 비교하기"를 눌러 보세요.'},
+ {s:'s21',t:'btn',n:'2 / 6',txt:'배달의민족 15,000원이 선택돼 있어요. "이 결제로 카드 찾기"를 눌러요.'},
+ {s:'s22',t:'btn',n:'3 / 6',txt:'이 결제에 혜택이 있는 카드가 떠요. KaPick으로 비교해요.'},
+ {s:'w3',t:'detail',n:'4 / 6',txt:'결론 → 판정 근거 → 카드 혜택 전체 순서예요. 아래로 내려 "KaPick 상세 보기"를 눌러요.'},
+ {s:'a7',t:'cta',n:'5 / 6',txt:'요일별 혜택 · 한도 · 신청 전 확인을 본 뒤 "신한카드에서 신청하기"를 눌러요.'},
+ {s:'s6',t:'go',n:'6 / 6',txt:'신청과 심사는 신한카드에서 이어져요. "신한카드로 이동"을 눌러요.'}
+];
+const ol=$('#steps'); STEPS.forEach((st,i)=>{ const li=document.createElement('li'); li.dataset.n=i+1; li.textContent=st.txt.replace(/\.$/,''); ol.appendChild(li); });
+function renderSteps(){ $$('#steps li').forEach((li,i)=>{ li.className=i<step?'done':i===step?'cur':''; }); }
+const wait=ms=>new Promise(r=>setTimeout(r,ms));
+const anim=(el,cls,ms)=>new Promise(r=>{ el.classList.add(cls); setTimeout(()=>{ el.classList.remove(cls); r(); },ms); });
+const pg=id=>document.getElementById(id);
+async function push(id){ const from=pg(cur()), to=pg(id); stack.push(id); to.classList.add('on'); const sc=to.querySelector('.scroll'); if(sc) sc.scrollTop=0; to.style.zIndex=20; from.style.zIndex=10; await Promise.all([anim(to,'push-in',320),anim(from,'under-out',320)]); from.classList.remove('on'); to.style.zIndex=''; from.style.zIndex=''; }
+async function pop(){ if(stack.length<2) return; const from=pg(stack.pop()), to=pg(cur()); to.classList.add('on'); from.style.zIndex=20; to.style.zIndex=10; await Promise.all([anim(from,'push-out',280),anim(to,'under-in',280)]); from.classList.remove('on'); from.style.zIndex=''; to.style.zIndex=''; }
+function swap(id){ const from=pg(cur()), to=pg(id); const sc=from.querySelector('.scroll'); const y=sc?sc.scrollTop:0; stack[stack.length-1]=id; to.classList.add('on'); const sc2=to.querySelector('.scroll'); if(sc2) sc2.scrollTop=y; anim(to,'fade-in',200); from.classList.remove('on'); }
+async function openSheet(id){ const el=pg(id); if(sheet){ const old=pg(sheet); old.classList.remove('in'); await wait(220); old.classList.remove('on'); }
+ sheet=id; el.classList.add('on'); dim.classList.add('on'); el.offsetHeight; el.classList.add('in'); await wait(340); }
+async function closeSheet(){ if(!sheet) return; const el=pg(sheet); el.classList.remove('in'); dim.classList.remove('on'); await wait(300); el.classList.remove('on'); sheet=null; }
+async function sheetToPage(id){ const el=pg(sheet); el.classList.remove('in'); dim.classList.remove('on'); setTimeout(()=>el.classList.remove('on'),300); sheet=null; await push(id); }
+const here=()=>sheet||cur();
+function ring(){ $$('.ring').forEach(r=>r.remove()); }
+function updCoach(){ ring(); if(!guide){ coach.style.display='none'; return; } const st=STEPS[step]; if(!st||st.s!==here()){ coach.style.display='none'; renderSteps(); return; }
+ $('#coachN').textContent=st.n; $('#coachT').textContent=st.txt; coach.style.display='block';
+ const scr=pg(here()); const hs=scr.querySelector('.hs[data-id="'+st.t+'"]'); if(hs){ const r=document.createElement('div'); r.className='ring'; r.style.left=(hs.offsetLeft-6)+'px'; r.style.top=(hs.offsetTop-6)+'px'; r.style.width=(hs.offsetWidth+12)+'px'; r.style.height=(hs.offsetHeight+12)+'px'; hs.parentNode.appendChild(r);
+  const sc=scr.querySelector('.scroll'); if(sc&&hs.closest('.content')){ const y=hs.offsetTop-260; if(y>0) sc.scrollTo({top:y,behavior:'smooth'}); } }
+ renderSteps(); }
+function say(m){ toast.textContent=m; toast.style.display='block'; clearTimeout(timer); timer=setTimeout(()=>toast.style.display='none',1800); }
+function tapFx(x,y){ const d=document.createElement('div'); d.className='tap'; d.style.left=x+'px'; d.style.top=y+'px'; device.appendChild(d); setTimeout(()=>d.remove(),500); }
+function endScreen(kind){ $('#end').style.display='block'; if(kind==='branch'){ $('#endH').textContent='분기 시연 끝'; $('#endP').innerHTML='iD ON 결과는 같은 결과 화면 템플릿으로 열려요.<br>여기까지가 준비한 범위예요.'; $('#endBranch').style.display='none'; } else { $('#endH').textContent='신한카드로 이동해요'; $('#endP').innerHTML='여기부터는 카드사 화면이에요.<br>카카오페이에서는 발급이 확정되지 않아요.'; $('#endBranch').style.display='block'; } coach.style.display='none'; ring(); if(guide&&kind==='main'){ step=STEPS.length; renderSteps(); } }
+function reset(id){ $$('.page').forEach(p=>p.classList.remove('on')); $$('.sheet').forEach(s=>s.classList.remove('on','in')); dim.classList.remove('on'); sheet=null; stack=[id]; pg(id).classList.add('on'); const sc=pg(id).querySelector('.scroll'); if(sc) sc.scrollTop=0; $('#end').style.display='none'; updCoach(); }
+async function act(hs){ if(busy) return; const st=STEPS[step];
+ if(guide&&st&&st.s===here()&&hs.dataset.id!==st.t&&!hs.dataset.back&&!hs.dataset.close){ say('가이드: 파란 테두리를 눌러 보세요'); const r=$('.ring'); if(r){ r.style.animation='none'; r.offsetHeight; r.style.animation=''; } return; }
+ if(guide&&st&&st.s===here()&&hs.dataset.id===st.t) step++;
+ busy=true; ring(); coach.style.display='none';
+ try{
+  if(hs.dataset.close){ await closeSheet(); }
+  else if(hs.dataset.back){ await pop(); }
+  else if(hs.dataset.end){ endScreen(hs.dataset.end); }
+  else if(hs.dataset.pay){ const p=hs.dataset.pay; if(p==='b') say('배달의민족이 선택됐어요'); else if(p==='g'){ await sheetToPage('w4'); say('G마켓 결제로 비교했어요 · 수요일 결제라 조건에 안 맞아요'); } else if(p==='gs'){ await openSheet('s22e'); } }
+  else { if(hs.dataset.toast) say(hs.dataset.toast);
+   if(hs.dataset.swap) swap(hs.dataset.swap);
+   else if(hs.dataset.sheet) await openSheet(hs.dataset.sheet);
+   else if(hs.dataset.go){ if(sheet) await sheetToPage(hs.dataset.go); else await push(hs.dataset.go); } }
+ } finally { busy=false; updCoach(); } }
+device.addEventListener('click',e=>{ const hs=e.target.closest('.hs'); if(!hs){ if(e.target===dim&&!busy){ busy=true; closeSheet().then(()=>{busy=false;updCoach();}); } return; } const rect=device.getBoundingClientRect(); const sc=rect.width/375; tapFx((e.clientX-rect.left)/sc,(e.clientY-rect.top)/sc); act(hs); });
+coach.querySelector('.x').addEventListener('click',()=>setMode(false));
+function setMode(g){ guide=g; $('#mGuide').classList.toggle('on',g); $('#mFree').classList.toggle('on',!g); if(g){ step=0; reset('home'); } updCoach(); }
+$('#mGuide').onclick=()=>setMode(true); $('#mFree').onclick=()=>setMode(false);
+$('#bReset').onclick=()=>{ step=0; reset('home'); };
+$('#bHint').onclick=()=>{ hint=!hint; $$('.hs').forEach(h=>h.classList.toggle('show',hint)); $('#bHint').textContent=hint?'표시 끄기':'탭 가능한 곳 보기'; };
+$('#endBranch').onclick=async()=>{ guide=false; $('#mGuide').classList.remove('on'); $('#mFree').classList.add('on'); reset('home'); await openSheet('s21'); say('G마켓 32,000원을 골라 보세요'); };
+$('#endHome').onclick=()=>{ step=0; reset('home'); };
+/* demo mode (video rendering): ?demo */
+if(location.search.includes('demo')){
+ document.body.classList.add('demo'); guide=false; coach.style.display='none';
+ const c=document.createElement('div'); c.id='cursor'; device.appendChild(c);
+ const cap=document.createElement('div'); cap.id='cap'; $('#stage').appendChild(cap);
+ const ttl=document.createElement('div'); ttl.id='title'; document.body.appendChild(ttl);
+ const ease=t=>t<.5?2*t*t:-1+(4-2*t)*t; let cx=187,cy=600; c.style.left=cx+'px'; c.style.top=cy+'px';
+ window.demo={
+  reset:id=>reset(id),
+  move:async(x,y,ms=600)=>{ const sx=cx,sy=cy; const t0=performance.now(); await new Promise(res=>{ const f=()=>{ const t=Math.min(1,(performance.now()-t0)/ms); const e=ease(t); cx=sx+(x-sx)*e; cy=sy+(y-sy)*e; c.style.left=cx+'px'; c.style.top=cy+'px'; if(t<1) requestAnimationFrame(f); else res(); }; f(); }); },
+  tap:async(sel,ms=600)=>{ const scr=pg(here()); const hs=scr.querySelector(sel); let x=hs.offsetLeft+hs.offsetWidth/2, y=hs.offsetTop+hs.offsetHeight/2; const sc=hs.closest('.scroll'); const fx=hs.closest('.fixed'); const sh=hs.closest('.sheet');
+    if(sc){ y+=parseFloat(getComputedStyle(sc).top)-sc.scrollTop; } else if(fx){ y+=fx.offsetTop; } else if(sh){ y+=812-sh.offsetHeight; }
+    await window.demo.move(x,y,ms); c.classList.add('down'); tapFx(x,y); await wait(140); c.classList.remove('down'); await act(hs); },
+  scroll:async(y,ms=900)=>{ const sc=pg(cur()).querySelector('.scroll'); if(!sc) return; const s0=sc.scrollTop; const t0=performance.now(); await new Promise(res=>{ const f=()=>{ const t=Math.min(1,(performance.now()-t0)/ms); sc.scrollTop=s0+(y-s0)*ease(t); if(t<1) requestAnimationFrame(f); else res(); }; f(); }); },
+  cap:(n,txt)=>{ cap.innerHTML=(n?'<b>'+n+'</b>':'')+txt; cap.classList.add('on'); },
+  capOff:()=>cap.classList.remove('on'),
+  hideCursor:h=>{ c.style.opacity=h?0:1; },
+  openSheet:id=>openSheet(id),
+  title:(on,t,sub)=>{ if(t) ttl.innerHTML='<h1>'+t+'</h1><p>'+(sub||'')+'</p>'; ttl.classList.toggle('on',!!on); }
+ };
+}
+function fit(){ if(document.body.classList.contains('demo')){ device.style.transform='none'; $('#stage').style.width='375px'; $('#stage').style.height='812px'; return; } const vh=window.innerHeight-48, vw=window.innerWidth-48; const sc=Math.min(1,vh/812,vw/375); device.style.transform='scale('+sc+')'; $('#stage').style.width=(375*sc)+'px'; $('#stage').style.height=(812*sc)+'px'; }
+window.addEventListener('resize',fit); fit();
+reset('home');
+})();
+</script>
+</body>
+</html>
