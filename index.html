@@ -179,8 +179,8 @@ body.demo #stage{margin:70px auto 0;width:375px}
 <div class="sheet" id="s31"><img src="img/s31_sheet.png" alt="카드 바꾸기">
   <div class="hs" data-close="1" data-id="close" style="left:319px;top:8px;width:48px;height:48px"></div>
   <div class="hs" data-id="row_kp" data-toast="KaPick이 선택돼 있어요" style="left:12px;top:148px;width:351px;height:64px"></div>
-  <div class="hs" data-id="row_id" data-toast="다른 카드 결과는 같은 결과 화면 템플릿으로 보여줘요" style="left:12px;top:212px;width:351px;height:64px"></div>
-  <div class="hs" data-id="row_lk" data-toast="다른 카드 결과는 같은 결과 화면 템플릿으로 보여줘요" style="left:12px;top:276px;width:351px;height:64px"></div>
+  <div class="hs" data-id="row_id" data-toast="다른 카드 결과 화면은 이번 시연 범위 밖이에요" style="left:12px;top:212px;width:351px;height:64px"></div>
+  <div class="hs" data-id="row_lk" data-toast="다른 카드 결과 화면은 이번 시연 범위 밖이에요" style="left:12px;top:276px;width:351px;height:64px"></div>
   <div class="hs" data-id="btn" data-close="1" style="left:16px;top:454px;width:343px;height:60px"></div>
 </div>
 <div class="sheet" id="s41"><img src="img/s41_sheet.png" alt="G마켓 카드 고르기">
@@ -253,7 +253,7 @@ function updCoach(){ ring(); if(!guide){ coach.style.display='none'; return; } c
  renderSteps(); }
 function say(m){ toast.textContent=m; toast.style.display='block'; clearTimeout(timer); timer=setTimeout(()=>toast.style.display='none',1800); }
 function tapFx(x,y){ const d=document.createElement('div'); d.className='tap'; d.style.left=x+'px'; d.style.top=y+'px'; device.appendChild(d); setTimeout(()=>d.remove(),500); }
-function endScreen(kind){ $('#end').style.display='block'; if(kind==='branch'){ $('#endH').textContent='분기 시연 끝'; $('#endP').innerHTML='iD ON 결과는 같은 결과 화면 템플릿으로 열려요.<br>여기까지가 준비한 범위예요.'; $('#endBranch').style.display='none'; } else { $('#endH').textContent='신한카드로 이동해요'; $('#endP').innerHTML='여기부터는 카드사 화면이에요.<br>카카오페이에서는 발급이 확정되지 않아요.'; $('#endBranch').style.display='block'; } coach.style.display='none'; ring(); if(guide&&kind==='main'){ step=STEPS.length; renderSteps(); } }
+function endScreen(kind){ $('#end').style.display='block'; if(kind==='branch'){ $('#endH').textContent='분기 시연 끝'; $('#endP').innerHTML='iD ON 결과 화면은 이번 시연 범위 밖이에요.<br>같은 결과 화면 구조로 설계했어요.'; $('#endBranch').style.display='none'; } else { $('#endH').textContent='신한카드로 이동해요'; $('#endP').innerHTML='여기부터는 카드사 화면이에요.<br>카카오페이에서는 발급이 확정되지 않아요.'; $('#endBranch').style.display='block'; } coach.style.display='none'; ring(); if(guide&&kind==='main'){ step=STEPS.length; renderSteps(); } }
 function reset(id){ $$('.page').forEach(p=>p.classList.remove('on')); $$('.sheet').forEach(s=>s.classList.remove('on','in')); dim.classList.remove('on'); sheet=null; stack=[id]; pg(id).classList.add('on'); const sc=pg(id).querySelector('.scroll'); if(sc) sc.scrollTop=0; $('#end').style.display='none'; updCoach(); }
 async function act(hs){ if(busy) return; const st=STEPS[step];
  if(guide&&st&&st.s===here()&&hs.dataset.id!==st.t&&!hs.dataset.back&&!hs.dataset.close){ say('가이드: 파란 테두리를 눌러 보세요'); const r=$('.ring'); if(r){ r.style.animation='none'; r.offsetHeight; r.style.animation=''; } return; }
